@@ -1,0 +1,6 @@
+APIs/*
+.secrets.yml
+previous_lessons/*
+.vscode
+Pipfile.lock
+*.pyc
