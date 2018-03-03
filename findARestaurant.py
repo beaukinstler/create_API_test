@@ -22,9 +22,9 @@ print(api_keys['googlemaps'])
 sys.stdout = codecs.getwriter('utf8')(sys.stdout)
 sys.stderr = codecs.getwriter('utf8')(sys.stderr)
 
-foursquare_client_id = ''
-foursquare_client_secret = ''
-google_api_key = ''
+foursquare_client_id = api_keys['foursquare_client_id']
+foursquare_client_secret = api_keys['foursquare_client_secret']
+google_api_key = api_keys['googlemaps']
 
 def getGeocodeLocation(inputString):
     #Replace Spaces with '+' in URL
