@@ -3,7 +3,7 @@ from models import Base, Restaurant
 from flask import Flask, jsonify, request
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, sessionmaker
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, exc
 
 import sys
 import codecs
@@ -47,8 +47,8 @@ def all_restaurants_handler():
       session.add(new_restaurant)
       session.commit()
     except exc.DatabaseError as e:
-      print("Problem commiting the update in %s" % new_restaurant.name)
-      print("Error message:" % e.message)
+      print("Problem commiting the update in {0}".format(new_restaurant.name))
+      print("Error message:".format(e.message))
     # return json data
 
     return jsonify(new_restaurant.serialize)
@@ -68,8 +68,45 @@ def all_restaurants_handler():
 @app.route('/restaurants/<int:id>', methods = ['GET','PUT', 'DELETE'])
 def restaurant_handler(id):
   #YOUR CODE HERE
-  print(request.headers)
-  return 'handler'
+  # get the restaurant
+  try:
+    restaurant=session.query(Restaurant).filter_by(id=id).one()
+    res_string = ""
+    if restaurant:
+      if request.method == 'GET':
+        print('GET method')
+        res_string = jsonify(restaurant.serialize)
+      elif request.method == 'PUT':
+        restaurant_name = request.form.get('name','')
+        if restaurant_name == '':
+          res_string = "name not found in form"
+        else:
+          print("Changing name from {0} to {1}".format(restaurant.restaurant_name, restaurant_name))
+          restaurant.restaurant_name=restaurant_name
+          try:
+            session.add(restaurant)
+            session.commit()
+          except exc.DatabaseError as e:
+            print("Problem commiting the update in {0}. name not changed to {0}".format(restaurant.restaurant_name, restaurant_name))
+            print("Error message:".format(e.message))
+            pass
+          res_string = jsonify(restaurant.serialize)
+        print('PUT method')
+      elif request.method == 'DELETE':
+        print('DELETE method')
+        session.delete(restaurant)
+        session.commit()
+      else:
+        print('Unsupported HTTP method')
+    else:
+      res_string = "restaurant {0} could not be found".format(id)
+    return res_string
+  except exc.SQLAlchemyError as e:
+    print("Problem finding restaurant with ID: {0}".format(id))
+    print("Error message:".format(e.message))
+    return "Problem finding restaurant with ID: {0} \n".format(id)
+  # print(request.headers)
+
 
 if __name__ == '__main__':
     app.debug = True
