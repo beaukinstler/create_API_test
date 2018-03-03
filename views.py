@@ -4,7 +4,7 @@ from flask import Flask, jsonify, request
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, sessionmaker
 from sqlalchemy import create_engine, exc
-
+import pdb
 import sys
 import codecs
 sys.stdout = codecs.getwriter('utf8')(sys.stdout)
@@ -49,25 +49,24 @@ def all_restaurants_handler():
     except exc.DatabaseError as e:
       print("Problem commiting the update in {0}".format(new_restaurant.name))
       print("Error message:".format(e.message))
-    # return json data
+
 
     return jsonify(new_restaurant.serialize)
   elif request.method == 'GET':
     # Return all Restaurants
     restaurants = session.query(Restaurant)
-    res_string = ""
-
+    restaurants_list = []
+    # add serialized json to array
     for res in restaurants:
-      res_string += str(res.restaurant_name) + "<br>"
-      res_string += str(res.restaurant_address) + "<br>"
-      res_string += str(res.restaurant_image) + "<br>"
-      res_string += "<br>"
+      restaurants_list.append(res.serialize)
 
-    return res_string
+    # send back a restaurants json object, with it's value the array of json restaurants
+    return_obj={}
+    return_obj['restaurants']=restaurants_list
+    return jsonify(return_obj)
     
 @app.route('/restaurants/<int:id>', methods = ['GET','PUT', 'DELETE'])
 def restaurant_handler(id):
-  #YOUR CODE HERE
   # get the restaurant
   try:
     restaurant=session.query(Restaurant).filter_by(id=id).one()
@@ -77,7 +76,8 @@ def restaurant_handler(id):
         print('GET method')
         res_string = jsonify(restaurant.serialize)
       elif request.method == 'PUT':
-        restaurant_name = request.form.get('name','')
+        # restaurant_name = request.form.get('name','')
+        restaurant_name = request.args.get('name')
         if restaurant_name == '':
           res_string = "name not found in form"
         else:
